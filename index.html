@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020a14">
+<meta name="mobile-web-app-capable" content="yes">
+<title>NOVA – Interface</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&display=swap">
+<style>
+/* VOICE: assistant holographique, calme et précis, ambiance labo de nuit
+   IDEA: un HUD projeté au-dessus d'un établi — réacteur central qui respire
+   PICTURE: anneaux concentriques animés sur canvas, réagissant à la voix
+   COLOUR and TYPE: abysse #020a14, cyan holo #39e6ff, accent rouge-or #ff5a3c ; Orbitron + Rajdhani
+   LAYOUT: 3 colonnes (panneaux / réacteur / panneaux), barre de commande en bas ; empilé sous 900px */
+:root{color-scheme:dark;--bg:#020a14;--ink:#cdf6ff;--dim:#5fa9bd;--holo:#39e6ff;--hot:#ff5a3c;--gold:#ffc861;--line:rgba(57,230,255,.28);--panel:rgba(8,40,60,.38)}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(ellipse at 50% 45%,#06263b 0%,#031421 45%,var(--bg) 80%);color:var(--ink);font:17px/1.45 Rajdhani,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#grid{position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at center,#000 20%,transparent 75%)}
+#scan{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+.app{position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:14px;padding:14px 18px}
+header{grid-column:1/-1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font:900 26px Orbitron,sans-serif;color:var(--holo);letter-spacing:.08em;text-shadow:0 0 14px var(--holo)}
+.logo small{font:500 12px Rajdhani;color:var(--dim);letter-spacing:.1em;margin-left:8px}
+.status{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);padding:4px 10px;border-radius:2px;font-size:14px;color:var(--dim);display:flex;gap:6px;align-items:center}
+.chip b{color:var(--ink);font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--holo);box-shadow:0 0 8px var(--holo)}
+.col{display:flex;flex-direction:column;gap:14px;overflow:auto;scrollbar-width:none}
+.panel{position:relative;background:var(--panel);border:1px solid var(--line);padding:14px 16px;backdrop-filter:blur(6px);clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px))}
+.panel::before{content:"";position:absolute;left:0;top:0;width:40px;height:2px;background:var(--holo);box-shadow:0 0 10px var(--holo)}
+.panel h2{margin:0 0 10px;font:700 14px Orbitron,sans-serif;color:var(--holo);letter-spacing:.06em}
+.row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(57,230,255,.12)}
+.row span:last-child{color:#fff;font-weight:600;white-space:nowrap}
+.bar{height:6px;background:rgba(57,230,255,.12);margin:6px 0 2px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--holo),#9ff4ff);box-shadow:0 0 8px var(--holo);transition:width .6s}
+.center{position:relative;display:grid;place-items:center}
+#reactor{position:absolute;inset:0;width:100%;height:100%}
+.core{position:relative;text-align:center;pointer-events:none}
+#clock{font:700 clamp(40px,6vw,78px)/1 Orbitron,sans-serif;color:#fff;text-shadow:0 0 18px var(--holo),0 0 40px rgba(57,230,255,.5);white-space:nowrap}
+#date{font-size:18px;color:var(--dim);margin-top:6px;text-transform:capitalize}
+#state{margin-top:10px;font:600 15px Orbitron;color:var(--holo);min-height:20px}
+#timerTxt{font:700 22px Orbitron;color:var(--gold);margin-top:8px;min-height:26px;text-shadow:0 0 10px var(--gold)}
+.wx{display:flex;align-items:center;gap:14px}
+.wx .t{font:700 44px Orbitron;color:#fff;text-shadow:0 0 12px var(--holo)}
+.wx .d{color:var(--dim)}
+ul.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+ul.notes li{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(57,230,255,.06);border-left:2px solid var(--holo)}
+ul.notes li span{flex:1}
+ul.notes button{background:none;border:0;color:var(--hot);font-size:20px;line-height:1;padding:0 4px;min-width:32px;min-height:32px;cursor:pointer}
+.empty{color:var(--dim);font-style:italic}
+#log{font:14px/1.5 Rajdhani;max-height:240px;overflow:auto;display:flex;flex-direction:column-reverse;gap:2px}
+#log div b{color:var(--holo);font-weight:600;margin-right:6px}
+#log .me{color:#fff}#log .ai{color:#9ff4ff}
+footer{grid-column:1/-1;display:flex;gap:12px;align-items:center}
+#mic{flex:none;width:64px;height:64px;border-radius:50%;border:2px solid var(--holo);background:radial-gradient(circle,#0b4a66,#03202f);color:var(--holo);cursor:pointer;display:grid;place-items:center;box-shadow:0 0 18px rgba(57,230,255,.45)}
+#mic.on{border-color:var(--hot);color:var(--hot);box-shadow:0 0 26px var(--hot);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+form{flex:1;display:flex;gap:10px}
+#cmd{flex:1;height:52px;background:rgba(3,25,38,.8);border:1px solid var(--line);color:#fff;font:600 18px Rajdhani;padding:0 16px;outline:none}
+#cmd:focus{border-color:var(--holo);box-shadow:0 0 12px rgba(57,230,255,.4)}
+.btn{height:52px;min-width:52px;padding:0 16px;background:rgba(57,230,255,.1);border:1px solid var(--line);color:var(--holo);font:700 14px Orbitron;cursor:pointer}
+.btn:hover,.btn:focus-visible{background:rgba(57,230,255,.22);outline:none}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.quick button{font:600 14px Rajdhani;background:rgba(57,230,255,.08);border:1px solid var(--line);color:var(--ink);padding:6px 10px;min-height:36px;cursor:pointer}
+#boot{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:9;transition:opacity .8s}
+#boot pre{font:600 15px/1.6 Rajdhani;color:var(--holo);min-width:300px;white-space:pre-wrap}
+#boot button{margin-top:18px}
+dialog{background:#04192a;color:var(--ink);border:1px solid var(--holo);padding:20px;max-width:420px;width:92vw}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog label{display:block;margin:10px 0 4px;color:var(--dim)}
+dialog input,dialog select{width:100%;height:44px;background:#021320;border:1px solid var(--line);color:#fff;font:16px Rajdhani;padding:0 10px}
+dialog .chk{display:flex;gap:10px;align-items:center;margin-top:12px}dialog .chk input{width:22px;height:22px}
+@media(max-width:900px){body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:auto;height:auto}.center{min-height:62vw;order:-1;grid-column:1}header{order:-2}footer{position:sticky;bottom:0;background:var(--bg);padding:8px 0}}
+@media(prefers-reduced-motion:reduce){#mic.on{animation:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<div class="app">
+  <header>
+    <div class="logo">N·O·V·A<small>Assistant holographique</small></div>
+    <div class="status">
+      <div class="chip"><span class="dot" id="netDot"></span><b id="net">En ligne</b></div>
+      <div class="chip">Batterie <b id="batChip">—</b></div>
+      <button class="btn" id="fsBtn" title="Plein écran">⛶</button>
+      <button class="btn" id="setBtn" title="Réglages">⚙</button>
+    </div>
+  </header>
+
+  <section class="col">
+    <div class="panel"><h2>Système</h2>
+      <div class="row"><span>Énergie</span><span id="bat">—</span></div>
+      <div class="bar"><i id="batBar" style="width:0"></i></div>
+      <div class="row"><span>Alimentation</span><span id="chg">—</span></div>
+      <div class="row"><span>Processeur</span><span id="cpu">—</span></div>
+      <div class="row"><span>Mémoire</span><span id="ram">—</span></div>
+      <div class="row"><span>Écran</span><span id="scr">—</span></div>
+      <div class="row"><span>Réseau</span><span id="conn">—</span></div>
+      <div class="row"><span>Session</span><span id="up">00:00:00</span></div>
+    </div>
+    <div class="panel"><h2>Météo</h2>
+      <div class="wx"><div class="t" id="wxT">--°</div><div><div id="wxD">Touchez pour actualiser</div><div class="d" id="wxP">—</div></div></div>
+      <div class="row"><span>Vent</span><span id="wxW">—</span></div>
+      <div class="row"><span>Humidité</span><span id="wxH">—</span></div>
+      <div class="quick"><button id="wxBtn">Actualiser</button></div>
+    </div>
+  </section>
+
+  <section class="center">
+    <canvas id="reactor"></canvas>
+    <div class="core">
+      <div id="clock">00:00:00</div>
+      <div id="date">—</div>
+      <div id="state">EN VEILLE</div>
+      <div id="timerTxt"></div>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="panel"><h2>Notes</h2><ul class="notes" id="notes"></ul></div>
+    <div class="panel"><h2>Journal</h2><div id="log"></div>
+      <div class="quick" id="quick"></div>
+    </div>
+  </section>
+
+  <footer>
+    <button id="mic" aria-label="Parler"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1A7 7 0 0 0 19 12z"/></svg></button>
+    <form id="f"><input id="cmd" placeholder="Parlez ou tapez une commande… (ex : météo, note acheter du pain, minuteur 5 minutes)" autocomplete="off"><button class="btn">Exécuter</button></form>
+  </footer>
+</div>
+<div id="scan"></div>
+
+<div id="boot"><div><pre id="bootTxt"></pre><button class="btn" id="startBtn" hidden>Activer NOVA</button></div></div>
+
+<dialog id="dlg"><form method="dialog" id="setForm">
+  <h2 style="font:700 16px Orbitron;color:var(--holo);margin:0">Réglages</h2>
+  <label for="sName">Votre prénom</label><input id="sName">
+  <label for="sCity">Ville pour la météo (vide = position GPS)</label><input id="sCity" placeholder="ex : Paris">
+  <label for="sVoice">Voix</label><select id="sVoice"></select>
+  <label for="sRate">Débit de parole</label><input id="sRate" type="range" min="0.7" max="1.4" step="0.05">
+  <div class="chk"><input type="checkbox" id="sWake"><label for="sWake" style="margin:0">Écoute permanente (dites « Nova, … »)</label></div>
+  <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end"><button class="btn" value="ok">Enregistrer</button></div>
+</form></dialog>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem('nova.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('nova.'+k,JSON.stringify(v))}catch(e){}}};
+const cfg=Object.assign({name:'Stéphane',city:'',voice:'',rate:1,wake:false},store.get('cfg',{}));
+let notes=store.get('notes',[]);
+const t0=Date.now();
+let energy=0,target=0,mode='idle',battery=null,timer=null;
+
+/* ---------- Réacteur ---------- */
+const cv=$('reactor'),cx=cv.getContext('2d');
+const rings=[{r:.92,w:2,dash:[2,10],sp:.08},{r:.84,w:10,dash:[40,14],sp:-.15},{r:.74,w:2,dash:[],sp:0},{r:.68,w:6,dash:[6,6],sp:.35},{r:.58,w:14,dash:[90,30,10,30],sp:-.25},{r:.47,w:2,dash:[1,5],sp:.6},{r:.40,w:4,dash:[120,40],sp:-.5}];
+function size(){const d=devicePixelRatio||1;cv.width=cv.clientWidth*d;cv.height=cv.clientHeight*d;cx.setTransform(d,0,0,d,0,0)}
+new ResizeObserver(size).observe(cv);
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function frame(t){
+  const W=cv.clientWidth,H=cv.clientHeight,R=Math.min(W,H)/2*.96,x=W/2,y=H/2,s=reduce?0:t/1000;
+  energy+=(target-energy)*.08;
+  const col=mode==='listen'?'255,90,60':mode==='speak'?'255,200,97':'57,230,255';
+  cx.clearRect(0,0,W,H);
+  const g=cx.createRadialGradient(x,y,0,x,y,R*.5);g.addColorStop(0,`rgba(${col},${.22+energy*.3})`);g.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,R*.5,0,7);cx.fill();
+  rings.forEach((g,i)=>{
+    const rr=R*g.r*(1+energy*.03*Math.sin(s*6+i));
+    cx.save();cx.translate(x,y);cx.rotate(s*g.sp*(1+energy*2));
+    cx.strokeStyle=`rgba(${col},${.35+.12*i/rings.length+energy*.3})`;cx.lineWidth=g.w;
+    cx.shadowColor=`rgba(${col},.9)`;cx.shadowBlur=8+energy*14;
+    cx.setLineDash(g.dash.map(v=>v*R/300));cx.beginPath();cx.arc(0,0,rr,0,Math.PI*2);cx.stroke();cx.restore();
+  });
+  // graduations
+  cx.save();cx.translate(x,y);cx.rotate(-s*.05);cx.strokeStyle=`rgba(${col},.5)`;cx.lineWidth=1;cx.shadowBlur=0;
+  for(let i=0;i<120;i++){const a=i/120*Math.PI*2,l=i%10?4:12;cx.beginPath();cx.moveTo(Math.cos(a)*R*.99,Math.sin(a)*R*.99);cx.lineTo(Math.cos(a)*(R*.99-l),Math.sin(a)*(R*.99-l));cx.stroke()}
+  cx.restore();
+  // arcs d'onde
+  cx.save();cx.translate(x,y);cx.strokeStyle=`rgba(${col},.85)`;cx.lineWidth=2;cx.shadowColor=`rgba(${col},1)`;cx.shadowBlur=12;
+  const n=64;cx.beginPath();for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,amp=energy*R*.06*(Math.sin(a*6+s*9)+Math.sin(a*11-s*5))/2,r=R*.785+amp;i?cx.lineTo(Math.cos(a)*r,Math.sin(a)*r):cx.moveTo(Math.cos(a)*r,Math.sin(a)*r)}cx.stroke();
+  // minuteur
+  if(timer){const p=Math.max(0,(timer.end-Date.now())/timer.dur);cx.strokeStyle='rgba(255,200,97,.95)';cx.shadowColor='#ffc861';cx.lineWidth=5;cx.setLineDash([]);cx.beginPath();cx.arc(0,0,R*.88,-Math.PI/2,-Math.PI/2+p*Math.PI*2);cx.stroke()}
+  cx.restore();
+  if(mode==='idle')target=.08+.05*Math.sin(s*1.5);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Horloge & système ---------- */
+const fmtT=d=>d.toLocaleTimeString('fr-FR');
+function tick(){
+  const d=new Date();$('clock').textContent=fmtT(d);
+  $('date').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const u=Math.floor((Date.now()-t0)/1000);$('up').textContent=[u/3600,u/60%60,u%60].map(v=>String(Math.floor(v)).padStart(2,'0')).join(':');
+  if(timer){const r=Math.max(0,Math.ceil((timer.end-Date.now())/1000));$('timerTxt').textContent='⏱ '+Math.floor(r/60)+':'+String(r%60).padStart(2,'0');
+    if(r<=0){timer=null;$('timerTxt').textContent='';beep();say('Le minuteur est terminé.')}}
+}
+function sys(){
+  $('cpu').textContent=(navigator.hardwareConcurrency||'?')+' cœurs';
+  $('ram').textContent=navigator.deviceMemory?navigator.deviceMemory+' Go':'n/d';
+  $('scr').textContent=screen.width+'×'+screen.height;
+  const c=navigator.connection;$('conn').textContent=c?(c.effectiveType||'').toUpperCase()+(c.downlink?' · '+c.downlink+' Mb/s':''):'n/d';
+  const on=navigator.onLine;$('net').textContent=on?'En ligne':'Hors ligne';$('netDot').style.background=on?'var(--holo)':'var(--hot)';
+}
+function bat(){
+  if(!battery){$('bat').textContent='n/d';return}
+  const p=Math.round(battery.level*100);$('bat').textContent=p+' %';$('batChip').textContent=p+' %';$('batBar').style.width=p+'%';
+  $('chg').textContent=battery.charging?'En charge':'Sur batterie';
+}
+if(navigator.getBattery)navigator.getBattery().then(b=>{battery=b;bat();['levelchange','chargingchange'].forEach(e=>b.addEventListener(e,bat))}).catch(()=>bat());else bat();
+addEventListener('online',sys);addEventListener('offline',sys);
+
+/* ---------- Journal & notes ---------- */
+function log(who,txt){const d=document.createElement('div');d.className=who;d.innerHTML='<b>'+fmtT(new Date()).slice(0,5)+'</b>';d.append(txt);$('log').prepend(d);while($('log').children.length>60)$('log').lastChild.remove()}
+function renderNotes(){
+  $('notes').innerHTML=notes.length?notes.map((n,i)=>`<li><span>${esc(n)}</span><button data-i="${i}" aria-label="Supprimer">×</button></li>`).join(''):'<li class="empty">Aucune note. Dites « note … »</li>';
+}
+$('notes').addEventListener('click',e=>{const i=e.target.dataset.i;if(i!=null){notes.splice(+i,1);store.set('notes',notes);renderNotes()}});
+
+/* ---------- Voix ---------- */
+let voices=[];
+function loadVoices(){voices=(speechSynthesis.getVoices()||[]).filter(v=>/^fr/i.test(v.lang));$('sVoice').innerHTML='<option value="">Automatique</option>'+voices.map(v=>`<option ${v.name===cfg.voice?'selected':''}>${esc(v.name)}</option>`).join('')}
+if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function say(txt){
+  log('ai',txt);
+  if(!('speechSynthesis'in window))return;
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='fr-FR';u.rate=+cfg.rate||1;u.pitch=.95;
+  const v=voices.find(v=>v.name===cfg.voice)||voices[0];if(v)u.voice=v;
+  u.onstart=()=>{mode='speak';target=.8;$('state').textContent='RÉPONSE'};
+  u.onboundary=()=>{target=.6+Math.random()*.4};
+  u.onend=()=>{mode='idle';$('state').textContent=listening?'ÉCOUTE':'EN VEILLE';if(cfg.wake)startRec()};
+  if(rec&&listening)try{rec.abort()}catch(e){}
+  speechSynthesis.speak(u);
+}
+function beep(){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1.2);o.start();o.stop(a.currentTime+1.2)}catch(e){}}
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false;
+if(SR){rec=new SR();rec.lang='fr-FR';rec.interimResults=true;rec.continuous=false;
+  rec.onstart=()=>{listening=true;mode='listen';target=.5;$('mic').classList.add('on');$('state').textContent='ÉCOUTE'};
+  rec.onresult=e=>{let txt='',fin=false;for(const r of e.results){txt+=r[0].transcript;fin=r.isFinal}$('cmd').value=txt;target=.5+Math.random()*.5;
+    if(fin){let t=txt.trim();if(cfg.wake){const m=t.match(/^(nova|nauva|nora)[ ,]*(.*)/i);if(!m)return;t=m[2]||'bonjour'}$('cmd').value='';run(t)}};
+  rec.onerror=e=>{if(e.error==='not-allowed'){log('ai','Micro refusé : autorisez-le dans Chrome.');cfg.wake=false}};
+  rec.onend=()=>{listening=false;$('mic').classList.remove('on');if(mode==='listen'){mode='idle';$('state').textContent='EN VEILLE'}
+    if(cfg.wake&&!speechSynthesis.speaking)setTimeout(startRec,400)};
+}
+function startRec(){if(!rec){say("La reconnaissance vocale n'est pas disponible ici. Utilisez Chrome sur la tablette.");return}if(listening)return;try{rec.start()}catch(e){}}
+$('mic').onclick=()=>{if(listening){cfg.wake=false;rec.stop()}else{speechSynthesis&&speechSynthesis.cancel();startRec()}};
+
+/* ---------- Météo ---------- */
+const WX={0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine légère',53:'Bruine',55:'Bruine forte',61:'Pluie faible',63:'Pluie',65:'Forte pluie',66:'Pluie verglaçante',71:'Neige faible',73:'Neige',75:'Forte neige',80:'Averses',81:'Averses',82:'Fortes averses',95:'Orage',96:'Orage et grêle',99:'Orage violent'};
+async function pos(){
+  if(cfg.city){const r=await(await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&name='+encodeURIComponent(cfg.city))).json();const p=r.results&&r.results[0];if(!p)throw Error('ville');return{lat:p.latitude,lon:p.longitude,name:p.name}}
+  return new Promise((ok,ko)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lon:p.coords.longitude,name:'Position actuelle'}),ko,{timeout:10000}):ko());
+}
+async function weather(speak){
+  $('wxD').textContent='Analyse atmosphérique…';
+  try{const p=await pos();
+    const r=await(await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`)).json();
+    const c=r.current,t=Math.round(c.temperature_2m),d=WX[c.weather_code]||'—';
+    $('wxT').textContent=t+'°';$('wxD').textContent=d;$('wxP').textContent=p.name+' · '+Math.round(r.daily.temperature_2m_min[0])+'° / '+Math.round(r.daily.temperature_2m_max[0])+'°';
+    $('wxW').textContent=Math.round(c.wind_speed_10m)+' km/h';$('wxH').textContent=c.relative_humidity_2m+' %';
+    if(speak)say(`${p.name==='Position actuelle'?'Ici':'À '+p.name}, il fait ${t} degrés, ${d.toLowerCase()}. Vent ${Math.round(c.wind_speed_10m)} kilomètres heure.`);
+  }catch(e){$('wxD').textContent='Météo indisponible';$('wxP').textContent='Autorisez la position ou réglez une ville';if(speak)say("Je n'arrive pas à joindre le service météo.")}
+}
+$('wxBtn').onclick=()=>weather(true);
+
+/* ---------- Commandes ---------- */
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[?!.]/g,'').trim();
+const SITES={youtube:'https://www.youtube.com',google:'https://www.google.fr',maps:'https://www.google.com/maps',carte:'https://www.google.com/maps',gmail:'https://mail.google.com',wikipedia:'https://fr.wikipedia.org',meteo:'https://meteofrance.com',netflix:'https://www.netflix.com',spotify:'https://open.spotify.com'};
+const go=u=>{const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';document.body.append(a);a.click();a.remove()};
+const nums={un:1,une:1,deux:2,trois:3,quatre:4,cinq:5,six:6,sept:7,huit:8,neuf:9,dix:10,quinze:15,vingt:20,trente:30};
+function calc(expr){
+  let e=' '+expr+' ';for(const[k,v]of Object.entries(nums))e=e.replace(new RegExp(' '+k+' ','g'),' '+v+' ');
+  e=e.replace(/plus/g,'+').replace(/moins/g,'-').replace(/(fois|multiplie par|x)/g,'*').replace(/(divise par|sur)/g,'/').replace(/,/g,'.').replace(/\s/g,'');
+  if(!/^[\d+\-*/().]+$/.test(e))return null;try{const r=Function('return('+e+')')();return isFinite(r)?Math.round(r*1e6)/1e6:null}catch(x){return null}
+}
+function run(raw){
+  if(!raw)return;log('me',raw);const t=norm(raw);let m;
+  if(/^(bonjour|salut|hello|coucou|bonsoir)/.test(t)){const h=new Date().getHours();say(`${h<18?'Bonjour':'Bonsoir'} ${cfg.name}. Tous les systèmes sont opérationnels.`)}
+  else if(/(qui es tu|presente toi|ton nom)/.test(t))say("Je suis NOVA, votre assistant holographique. Je gère l'heure, la météo, vos notes, les minuteurs, les calculs et l'ouverture de sites.");
+  else if(/(aide|que sais tu faire|commandes)/.test(t))say("Dites par exemple : quelle heure est-il, météo, batterie, note acheter du pain, lis mes notes, minuteur cinq minutes, combien font douze fois huit, ouvre YouTube, ou cherche recette de crêpes.");
+  else if(/heure/.test(t)&&!/minuteur/.test(t)){const d=new Date();say(`Il est ${d.getHours()} heures ${String(d.getMinutes()).padStart(2,'0')}.`)}
+  else if(/(date|quel jour|jour sommes)/.test(t))say("Nous sommes le "+new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'.');
+  else if(/(meteo|quel temps|temperature)/.test(t))weather(true);
+  else if(/(batterie|energie)/.test(t))say(battery?`Batterie à ${Math.round(battery.level*100)} pour cent, ${battery.charging?'en charge':'sur batterie'}.`:'Je ne peux pas lire la batterie sur cet appareil.');
+  else if(/(diagnostic|etat du systeme|rapport)/.test(t)){sys();say(`Diagnostic terminé. ${navigator.hardwareConcurrency||'?'} cœurs actifs, connexion ${navigator.onLine?'établie':'perdue'}${battery?', énergie à '+Math.round(battery.level*100)+' pour cent':''}. Aucune anomalie détectée.`)}
+  else if((m=t.match(/(efface|supprime|vide).*(notes|note)/))){notes=[];store.set('notes',notes);renderNotes();say('Toutes les notes sont effacées.')}
+  else if(/(lis|liste|lire|quelles sont).*(notes)/.test(t))say(notes.length?`Vous avez ${notes.length} note${notes.length>1?'s':''} : `+notes.join('. ')+'.':"Vous n'avez aucune note.");
+  else if((m=raw.match(/^\s*(note|notes|ajoute|rappelle[- ]moi( de)?|retiens)\s*:?\s+(.+)/i))){notes.unshift(m[3].trim());store.set('notes',notes);renderNotes();say('Note enregistrée.')}
+  else if((m=t.match(/(minuteur|chrono|timer|compte a rebours)\D*(\d+|\w+)\s*(minute|min|seconde|sec|heure)?/))){
+    let n=+m[2]||nums[m[2]]||0;const u=(m[3]||'minute');if(!n){say('Pour combien de temps ?');return}
+    const ms=n*(/sec/.test(u)?1e3:/heure/.test(u)?36e5:6e4);timer={end:Date.now()+ms,dur:ms};say(`Minuteur lancé pour ${n} ${u.startsWith('sec')?'seconde':u.startsWith('heure')?'heure':'minute'}${n>1?'s':''}.`)}
+  else if(/(annule|stop).*(minuteur|chrono|timer)/.test(t)){timer=null;$('timerTxt').textContent='';say('Minuteur annulé.')}
+  else if((m=t.match(/(combien font|combien fait|calcule)\s+(.+)/))){const r=calc(m[2]);say(r==null?"Je n'ai pas compris le calcul.":`Le résultat est ${String(r).replace('.',',')}.`)}
+  else if((m=t.match(/^(ouvre|lance|va sur)\s+(.+)/))){const k=Object.keys(SITES).find(k=>m[2].includes(k));if(k){say('Ouverture de '+k+'.');go(SITES[k])}else{say('Je lance une recherche pour '+m[2]+'.');go('https://www.google.fr/search?q='+encodeURIComponent(m[2]))}}
+  else if((m=raw.match(/^\s*(cherche|recherche|trouve)\s+(.+)/i))){say('Recherche en cours : '+m[2]+'.');go('https://www.google.fr/search?q='+encodeURIComponent(m[2]))}
+  else if(/plein ecran/.test(t))fullscreen();
+  else if(/(merci)/.test(t))say(`Avec plaisir, ${cfg.name}.`);
+  else if(/(au revoir|bonne nuit|veille)/.test(t)){cfg.wake=false;say(`À bientôt, ${cfg.name}. Je passe en veille.`)}
+  else{const r=calc(t);r!=null?say(`Le résultat est ${String(r).replace('.',',')}.`):say("Commande non reconnue. Dites « aide » pour la liste des commandes.")}
+}
+$('f').addEventListener('submit',e=>{e.preventDefault();const v=$('cmd').value;$('cmd').value='';run(v)});
+const Q=['Bonjour','Météo','Diagnostic','Lis mes notes','Minuteur 5 minutes','Aide'];
+$('quick').innerHTML=Q.map(q=>`<button>${q}</button>`).join('');
+$('quick').addEventListener('click',e=>{if(e.target.tagName==='BUTTON')run(e.target.textContent)});
+
+/* ---------- Plein écran, réglages, veille écran ---------- */
+function fullscreen(){const d=document.documentElement;(document.fullscreenElement?document.exitFullscreen():d.requestFullscreen&&d.requestFullscreen()).catch?.(()=>{})}
+$('fsBtn').onclick=fullscreen;
+$('setBtn').onclick=()=>{$('sName').value=cfg.name;$('sCity').value=cfg.city;$('sRate').value=cfg.rate;$('sWake').checked=cfg.wake;loadVoices&&('speechSynthesis'in window)&&loadVoices();$('dlg').showModal()};
+$('setForm').addEventListener('submit',()=>{cfg.name=$('sName').value.trim()||'Stéphane';cfg.city=$('sCity').value.trim();cfg.voice=$('sVoice').value;cfg.rate=+$('sRate').value;cfg.wake=$('sWake').checked;store.set('cfg',cfg);weather(false);if(cfg.wake)startRec()});
+let lock=null;async function keepAwake(){try{lock=await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepAwake()});
+
+/* ---------- Démarrage ---------- */
+const lines=['> Initialisation du noyau NOVA…','> Calibrage des capteurs… OK','> Liaison réseau… '+(navigator.onLine?'OK':'HORS LIGNE'),'> Module vocal… '+(SR?'OK':'texte uniquement'),'> Interface holographique… OK','','Prêt.'];
+let li=0;(function typeL(){if(li<lines.length){$('bootTxt').textContent+=lines[li++]+'\n';setTimeout(typeL,260)}else $('startBtn').hidden=false})();
+$('startBtn').onclick=()=>{$('boot').style.opacity=0;setTimeout(()=>$('boot').remove(),800);keepAwake();
+  const h=new Date().getHours();say(`${h<5||h>=18?'Bonsoir':'Bonjour'} ${cfg.name}. NOVA est en ligne.`);weather(false);if(cfg.wake)setTimeout(startRec,2500)};
+renderNotes();sys();tick();setInterval(tick,1000);setInterval(sys,15000);size();requestAnimationFrame(frame);
+if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
